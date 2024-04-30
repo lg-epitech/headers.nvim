@@ -10,6 +10,8 @@ local utils = require("headers.utils")
 
 ---@class Templates
 ---@field ls function
+---@field add function
+---@field delete function
 local Templates = {}
 
 function Templates:ls()
