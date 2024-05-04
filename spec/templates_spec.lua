@@ -5,10 +5,17 @@
 -- templates_test.lua
 --
 
-require("headers").setup({templates_dir = "/home/laurent/projects/headers.nvim/templates"})
+-- WARN: If you happen to be a contributor and want to run these tests.
+-- Change the following directory to your current templates dir.
+-- rm -rf happens so be extra careful.
+local directory = "/home/laurent/projects/headers.nvim/templates"
 
+require("headers").setup({templates_dir = directory})
 ---@type Templates
 local templates = require("headers.templates")
+
+local test = require("plenary.busted")
+local assert = require("luassert")
 
 ---@param command string
 local function get_command_output(command)
@@ -22,53 +29,51 @@ local function get_command_output(command)
     return output
 end
 
-describe("Templates:", function()
-    setup(function()
-        os.execute("mv /home/laurent/projects/headers.nvim/templates /home/laurent/projects/headers.nvim/templates.back")
-        os.execute("mkdir /home/laurent/projects/headers.nvim/templates")
+-- setup
+os.execute(string.format("mv %s %s.back", directory, directory))
+os.execute(string.format("mkdir %s", directory))
+
+test.describe("Templates:", function()
+    test.before_each(function()
+        os.execute(string.format("rm -rf %s/*", directory))
     end)
 
-    before_each(function()
-        os.execute("rm -rf /home/laurent/projects/headers.nvim/templates/*")
-    end)
-
-    it("add: templates", function()
+    test.it("add: templates", function()
         templates:add("test_ok")
         templates:add("nottin")
 
-        local output = get_command_output("ls /home/laurent/projects/headers.nvim/templates")
+        local output = get_command_output(string.format("ls %s", directory))
 
         assert.are.equal("nottin\ntest_ok\n", output)
     end)
 
-    it("add: duplicate", function()
-        os.execute("mkdir /home/laurent/projects/headers.nvim/templates/test")
-        local before = get_command_output("ls /home/laurent/projects/headers.nvim/templates")
+    test.it("add: duplicate", function()
+        os.execute(string.format("mkdir %s/test", directory))
+        local before = get_command_output(string.format("ls -l %s", directory))
         templates:add("test")
-        local after = get_command_output("ls /home/laurent/projects/headers.nvim/templates")
+        local after = get_command_output(string.format("ls -l %s", directory))
 
         assert.are.equal(before, after)
     end)
 
-    it("add: ''", function()
+    test.it("add: ''", function()
         templates:add("")
 
-        local output = get_command_output("ls /home/laurent/projects/headers.nvim/templates")
+        local output = get_command_output(string.format("ls %s", directory))
 
         assert.are.equal("", output)
     end)
 
-    it("delete: template", function()
-        os.execute("mkdir /home/laurent/projects/headers.nvim/templates/test")
+    test.it("delete: template", function()
+        os.execute(string.format("mkdir %s/test", directory))
         templates:delete("test")
 
-        local output = get_command_output("ls /home/laurent/projects/headers.nvim/templates")
+        local output = get_command_output(string.format("ls %s", directory))
 
         assert.are.equal("", output)
     end)
-
-    teardown(function()
-        os.execute("rm -rf /home/laurent/projects/headers.nvim/templates")
-        os.execute("mv /home/laurent/projects/headers.nvim/templates.back /home/laurent/projects/headers.nvim/templates")
-    end)
 end)
+
+-- teardown
+os.execute(string.format("rm -rf %s", directory))
+os.execute(string.format("mv %s.back %s", directory, directory))
