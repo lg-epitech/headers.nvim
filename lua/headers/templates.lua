@@ -14,16 +14,16 @@ local Templates = {}
 
 ---@param name string
 function Templates:add(name)
-    if HConfig.templates_dir == nil or
-    HConfig.templates_dir:is_dir() == false then
-        print("No/Invalid templates directory specified, please refer to the documentation.")
+    if HConfig.templates_dir == nil or not HConfig.templates_dir:is_dir() then
+        print("No/Invalid templates directory specified")
         return
     end
 
     local new_template_path = path:new(HConfig.templates_dir:joinpath(name))
 
     if new_template_path:is_dir() then
-        print("Template already exists.") -- Maybe consider making a flag to bypass that check
+        -- Maybe make a flag to bypass this
+        print("Template already exists.")
         return
     end
     new_template_path:mkdir()
@@ -31,9 +31,8 @@ end
 
 ---@param name string
 function Templates:delete(name)
-    if HConfig.templates_dir == nil or
-    HConfig.templates_dir:is_dir() == false then
-        print("No/Invalid templates directory specified, please refer to the documentation.")
+    if HConfig.templates_dir == nil or not HConfig.templates_dir:is_dir() then
+        print("No/Invalid templates directory specified")
         return
     end
 
