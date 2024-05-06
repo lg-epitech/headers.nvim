@@ -9,8 +9,8 @@
 -- Change the following directory to your current templates dir.
 -- rm -rf happens so be extra careful.
 local directory = "/home/laurent/projects/headers.nvim/templates"
-
 require("headers").setup({templates_dir = directory})
+
 ---@type Templates
 local templates = require("headers.templates")
 

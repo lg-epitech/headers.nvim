@@ -5,64 +5,50 @@
 -- templates.lua
 --
 
-local lfs = require("lfs")
-local utils = require("headers.utils")
+local path = require("plenary.path")
 
 ---@class Templates
----@field ls function
 ---@field add function
 ---@field delete function
 local Templates = {}
 
-function Templates:ls()
-    if HeadersConfig.templates_dir == nil or
-    utils.is_dir(HeadersConfig.templates_dir) == false then
-        print("No/Invalid templates directory specified, please refer to the documentation.")
-        return
-    end
-
-    for template in lfs.dir(HeadersConfig.templates_dir) do
-        local template_path = HeadersConfig.templates_dir .. HeadersConfig.path_sep .. template
-        if lfs.attributes(template_path, "mode") == "directory" and template:sub(0, 1) ~= "." then
-            print(template)
-        end
-    end
-end
-
 ---@param name string
 function Templates:add(name)
-    if HeadersConfig.templates_dir == nil or
-    utils.is_dir(HeadersConfig.templates_dir) == false then
+    if HConfig.templates_dir == nil or
+    HConfig.templates_dir:is_dir() == false then
         print("No/Invalid templates directory specified, please refer to the documentation.")
         return
     end
 
-    local new_template_path = HeadersConfig.templates_dir .. HeadersConfig.path_sep .. name
+    local new_template_path = path:new(HConfig.templates_dir:joinpath(name))
 
-    if utils.is_dir(new_template_path) then
+    if new_template_path:is_dir() then
         print("Template already exists.") -- Maybe consider making a flag to bypass that check
         return
     end
-    lfs.mkdir(new_template_path)
+    new_template_path:mkdir()
 end
 
 ---@param name string
 function Templates:delete(name)
-    if HeadersConfig.templates_dir == nil or
-    utils.is_dir(HeadersConfig.templates_dir) == false then
+    if HConfig.templates_dir == nil or
+    HConfig.templates_dir:is_dir() == false then
         print("No/Invalid templates directory specified, please refer to the documentation.")
         return
     end
 
-    local template_path = HeadersConfig.templates_dir .. HeadersConfig.path_sep .. name
+    local template_path = path:new(HConfig.templates_dir:joinpath(name))
 
-    if not utils.is_dir(template_path) then
+    if not template_path:is_dir() then
         print("Template doesn't exist.")
         return
     end
 
-    utils.remove_recursively(template_path)
-    print("Deleted template: " .. name)
+    if template_path:rmdir() == nil then
+        print("Detected error in removing template " .. name)
+    else
+        print("Deleted template: " .. name)
+    end
 end
 
 return Templates
