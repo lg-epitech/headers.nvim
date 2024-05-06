@@ -1,0 +1,39 @@
+name: Run tests
+
+on: [push, pull_request]
+
+jobs:
+    format:
+        name: Run tests
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                path: /home/runner/headers.nvim/
+
+            - name: Install
+              run: |
+                sudo apt-get update
+                sudo apt-get install neovim
+
+            - name: Setup
+              timeout-minutes: 2
+              run: |
+                set +e
+                mkdir -p /home/runner/.config/nvim
+                cp /home/runner/headers.nvim/.github/workflows/init.lua /home/runner/.config/nvim
+
+                nvim --headless +qa
+
+            - name: Tests
+              run: |
+                set +e
+
+                log=$(make)
+
+                if [[ $? -ne 0 ]]; then
+                  echo "::error title=Tests failed::$log"
+                  exit 1
+                fi
