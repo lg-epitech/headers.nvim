@@ -7,8 +7,11 @@ jobs:
         name: Stylua
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
-            - run: date +%W > weekly
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Date
+              run: date +%W > weekly
 
             - name: Restore cache
               id: cache

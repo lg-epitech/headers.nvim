@@ -13,7 +13,16 @@ jobs:
               with:
                 path: /home/runner/work/headers.nvim/headers.nvim
 
+            - name: Cache Neovim Install
+              uses: actions/cache@v2
+              with:
+                path: /snap/bin
+                key: neovim-${{ runner.os }}-${{ hashFiles('**/init.lua') }}
+                restore-keys: |
+                  neovim-${{ runner.os }}-
+
             - name: Install
+              if: steps.cache.outputs.cache-hit != 'true'
               run: |
                 sudo snap install nvim --classic
 
