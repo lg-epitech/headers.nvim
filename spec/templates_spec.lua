@@ -5,17 +5,13 @@
 -- templates_test.lua
 --
 
--- WARN: If you happen to be a contributor and want to run these tests.
--- Change the following directory to your current templates dir.
--- rm -rf happens so be extra careful.
-local directory = "/home/laurent/projects/headers.nvim/templates"
-require("headers").setup({templates_dir = directory})
-
 ---@type Templates
 local templates = require("headers.templates")
-
 local test = require("plenary.busted")
 local assert = require("luassert")
+
+local directory = os.getenv("PWD").."/templates"
+require("headers").setup({templates_dir = directory})
 
 ---@param command string
 local function get_command_output(command)
