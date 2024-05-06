@@ -15,8 +15,11 @@ jobs:
 
             - name: Install
               run: |
-                sudo apt-get update
-                sudo apt-get install neovim
+                curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+                sudo rm -rf /opt/nvim
+                sudo tar -C /opt -xzf nvim-linux64.tar.gz
+
+                export PATH="$PATH:/opt/nvim-linux64/bin"
 
             - name: Setup
               timeout-minutes: 2
@@ -28,6 +31,7 @@ jobs:
                 nvim --headless +qa
 
             - name: Tests
+              timeout-minutes: 2
               run: |
                 set +e
 
