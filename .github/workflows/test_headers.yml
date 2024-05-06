@@ -15,11 +15,7 @@ jobs:
 
             - name: Install
               run: |
-                curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
-                mkdir -p $HOME/neovim
-                tar -C $HOME/neovim -xzf nvim-linux64.tar.gz
-
-                export PATH="$HOME/neovim/bin:$PATH"
+                sudo snap install nvim
 
             - name: Setup
               timeout-minutes: 2
