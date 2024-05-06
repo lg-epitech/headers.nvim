@@ -15,7 +15,7 @@ jobs:
 
             - name: Install
               run: |
-                sudo snap install nvim
+                sudo snap install nvim --classic
 
             - name: Setup
               timeout-minutes: 2
