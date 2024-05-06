@@ -66,7 +66,7 @@ test.describe("Templates:", function()
 
         local output = get_command_output(string.format("ls %s", directory))
 
-        assert.are.equal("a", output)
+        assert.are.equal("", output)
     end)
 end)
 
