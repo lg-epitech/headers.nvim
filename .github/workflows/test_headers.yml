@@ -1,0 +1,48 @@
+name: Run tests
+
+on: [push, pull_request]
+
+jobs:
+    format:
+        name: Run tests
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                path: /home/runner/work/headers.nvim/headers.nvim
+
+            - name: Cache Neovim Install
+              uses: actions/cache@v3
+              with:
+                path: /snap/bin
+                key: neovim-${{ runner.os }}-${{ hashFiles('**/init.lua') }}
+                restore-keys: |
+                  neovim-${{ runner.os }}-
+
+            - name: Install
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: |
+                sudo snap install nvim --classic
+
+            - name: Setup
+              timeout-minutes: 2
+              run: |
+                set +e
+                mkdir -p /home/runner/.config/nvim
+                cp /home/runner/work/headers.nvim/headers.nvim/.github/workflows/init.lua /home/runner/.config/nvim
+
+                nvim --headless +qa
+
+            - name: Tests
+              timeout-minutes: 2
+              run: |
+                set +e
+
+                log=$(make)
+
+                if [[ $? -ne 0 ]]; then
+                  echo "::error title=Tests failed::$log"
+                  exit 1
+                fi
