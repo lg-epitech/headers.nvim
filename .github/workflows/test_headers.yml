@@ -11,7 +11,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
-                path: /home/runner/headers.nvim/
+                path: /home/runner/work/headers.nvim/headers.nvim
 
             - name: Install
               run: |
@@ -23,7 +23,7 @@ jobs:
               run: |
                 set +e
                 mkdir -p /home/runner/.config/nvim
-                cp /home/runner/headers.nvim/.github/workflows/init.lua /home/runner/.config/nvim
+                cp /home/runner/work/headers.nvim/headers.nvim/.github/workflows/init.lua /home/runner/.config/nvim
 
                 nvim --headless +qa
 
