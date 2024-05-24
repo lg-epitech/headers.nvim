@@ -13,13 +13,16 @@ jobs:
               with:
                 path: /home/runner/work/headers.nvim/headers.nvim
 
+            - name: Date
+              run: date +%W > weekly
+
             - name: Cache Neovim Install
+              id: cache
               uses: actions/cache@v3
               with:
-                path: /snap/bin
-                key: neovim-${{ runner.os }}-${{ hashFiles('**/init.lua') }}
-                restore-keys: |
-                  neovim-${{ runner.os }}-
+                path: |
+                  /snap/bin
+                key: ${{ runner.os }}-neovim-snap-${{ hashFiles('weekly') }}
 
             - name: Install
               if: steps.cache.outputs.cache-hit != 'true'
@@ -32,8 +35,6 @@ jobs:
                 set +e
                 mkdir -p /home/runner/.config/nvim
                 cp /home/runner/work/headers.nvim/headers.nvim/.github/workflows/init.lua /home/runner/.config/nvim
-
-                nvim --headless +qa
 
             - name: Tests
               timeout-minutes: 2
