@@ -17,6 +17,7 @@ jobs:
               run: date +%W > weekly
 
             - name: Cache Neovim Install
+              id: cache
               uses: actions/cache@v3
               with:
                 path: /snap/bin
