@@ -40,6 +40,7 @@ jobs:
               run: |
                 set +e
 
+                which nvim
                 log=$(make)
 
                 if [[ $? -ne 0 ]]; then
