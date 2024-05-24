@@ -20,7 +20,8 @@ jobs:
               id: cache
               uses: actions/cache@v3
               with:
-                path: /snap/bin
+                path: |
+                  /snap/bin
                 key: ${{ runner.os }}-neovim-snap-${{ hashFiles('weekly') }}
 
             - name: Install
@@ -40,7 +41,6 @@ jobs:
               run: |
                 set +e
 
-                which nvim
                 log=$(make)
 
                 if [[ $? -ne 0 ]]; then
