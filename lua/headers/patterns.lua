@@ -31,13 +31,10 @@ local Pattern = {
 function Pattern:find(match)
     for _, p in pairs(self) do
         if type(p) ~= "table" then
-            goto continue
+            if string.sub(match, 1, #p.name) == p.name then
+                return p
+            end
         end
-
-        if string.sub(match, 1, #p.name) == p.name then
-            return p
-        end
-        ::continue::
     end
     return nil
 end
