@@ -11,7 +11,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
-                path: /home/runner/headers.nvim/headers.nvim
+                path: /home/runner/work/headers.nvim/headers.nvim
 
             - name: Cache Neovim Install
               uses: actions/cache@v3
@@ -31,7 +31,7 @@ jobs:
               run: |
                 set +e
                 mkdir -p /home/runner/.config/nvim
-                cp /home/runner/headers.nvim/headers.nvim/.github/workflows/init.lua /home/runner/.config/nvim
+                cp /home/runner/work/headers.nvim/headers.nvim/.github/workflows/init.lua /home/runner/.config/nvim
 
             - name: Tests
               timeout-minutes: 2
