@@ -7,30 +7,171 @@
 
 local M = {}
 
-local Pattern = {
-    { name = "%", action = nil },
-    { name = "ft", action = nil },
-    { name = "f", action = nil },
-    { name = "n", action = nil },
-    { name = "p", action = nil },
-    { name = "h", action = nil },
-    { name = "gp", action = nil },
-    { name = "g", action = nil },
-    { name = "dd", action = nil },
-    { name = "mm", action = nil },
-    { name = "yyyy", action = nil },
-    { name = "yy", action = nil },
-    { name = "su", action = nil },
-    { name = "m", action = nil },
-    { name = "u", action = nil },
-    { name = "e", action = nil },
-}
+-- NOTE: Patterns
+
+---@class Pattern
+---@field name string
+---@field execute function|nil
+local Pattern = {}
+
+---@param name string
+---@param execute function|nil
+---@return Pattern
+function Pattern:new(name, execute)
+    local newpat = {}
+
+    newpat.name = name or ""
+    newpat.execute = execute
+    setmetatable(newpat, Pattern)
+    return newpat
+end
+
+---@return string
+Pattern.percent = function()
+    return "%"
+end
+
+---@return string
+Pattern.ft = function()
+    return vim.bo.filetype
+end
+
+---@return string
+Pattern.f = function()
+    return vim.fn.expand("%:t")
+end
+
+---@return string
+Pattern.n = function()
+    return vim.fn.expand("%:t:r")
+end
+
+---@return string
+Pattern.p = function()
+    return vim.fn.expand("%:p")
+end
+
+---@return string
+Pattern.hrp = function()
+    return vim.fn.expand("%:p:~")
+end
+
+---@return string
+Pattern.crp = function()
+    return vim.fn.expand("%:.")
+end
+
+---@return string
+Pattern.grp = function()
+    if os.execute("git rev-parse --is-inside-work-tree &> /dev/null") ~= 0 then
+        return Pattern.crp()
+    end
+
+    local p = vim.api.nvim_buf_get_name(0)
+    local GitPath = io.popen("git rev-parse --show-toplevel"):read()
+
+    if string.sub(p, 1, #GitPath) == GitPath then
+        return string.sub(p, #GitPath + 2, #p)
+    end
+
+    return Pattern.hrp()
+end
+
+---@return string
+Pattern.g = function()
+    if os.execute("git rev-parse --is-inside-work-tree &> /dev/null") ~= 0 then
+        return vim.fn.expand("%:h")
+    end
+
+    local p = vim.api.nvim_buf_get_name(0)
+    local GitPath = io.popen("git rev-parse --show-toplevel"):read()
+
+    if string.sub(p, 1, #GitPath) == GitPath then
+        local s = vim.split(GitPath, "/")
+        return s[#s]
+    end
+
+    return vim.fn.expand("%:h")
+end
+
+---@return string
+Pattern.dd = function()
+    return io.popen("date +%d"):read()
+end
+
+---@return string
+Pattern.mm = function()
+    return io.popen("date +%m"):read()
+end
+
+---@return string
+Pattern.yyyy = function()
+    return io.popen("date +%Y"):read()
+end
+
+---@return string
+Pattern.yy = function()
+    return io.popen("date +%y"):read()
+end
+
+---@return string
+Pattern.su = function()
+    return io.popen("whoami"):read()
+end
+
+---@return string
+Pattern.m = function()
+    return HConfig.email or "Unspecified"
+end
+
+---@return string
+Pattern.u = function()
+    return HConfig.username or "Unspecified"
+end
+
+---@return string
+Pattern.e = function()
+    return vim.fn.expand("%:e")
+end
+
+-- NOTE: List of Patterns
+
+---@class pList
+local pList = {}
+
+---@param name string
+---@param execute function|nil
+function pList:addPattern(name, execute)
+    table.insert(self, Pattern:new(name, execute))
+end
+
+pList:addPattern("yyyy", Pattern.yyyy)
+pList:addPattern("hrp", Pattern.hrp)
+pList:addPattern("crp", Pattern.crp)
+pList:addPattern("grp", Pattern.grp)
+pList:addPattern("dd", Pattern.dd)
+pList:addPattern("mm", Pattern.mm)
+pList:addPattern("yy", Pattern.yy)
+pList:addPattern("su", Pattern.su)
+pList:addPattern("ft", Pattern.ft)
+pList:addPattern("%", Pattern.percent)
+pList:addPattern("f", Pattern.f)
+pList:addPattern("n", Pattern.n)
+pList:addPattern("p", Pattern.p)
+pList:addPattern("g", Pattern.g)
+pList:addPattern("m", Pattern.m)
+pList:addPattern("u", Pattern.u)
+pList:addPattern("e", Pattern.e)
 
 ---@param match string
----@return table|nil
-function Pattern:find(match)
+---@return Pattern|nil
+function pList:find(match)
+    if #match == 0 then
+        return nil
+    end
+
     for _, p in pairs(self) do
-        if type(p) ~= "table" then
+        if type(p) == "table" then
             if string.sub(match, 1, #p.name) == p.name then
                 return p
             end
@@ -42,25 +183,27 @@ end
 ---@param template string
 ---@return string|nil
 M.format = function(template)
-    if string.find(template, "%%") == nil then
-        return template
-    end
+    local i = 1
+    local result = ""
 
-    local matches = {}
-    for m in string.gmatch(template, "([^%%]+)") do
-        table.insert(matches, m)
-    end
-    if string.sub(template, 1, 1) ~= "%" then
-        table.remove(matches, 1)
-    end
+    while i ~= #template + 1 do
+        local c = string.sub(template, i, i)
 
-    for _, m in pairs(matches) do
-        local pattern = Pattern:find(m)
-        assert(pattern ~= nil, string.format("Pattern invalid: %.10s", m))
+        if c ~= "%" then
+            result = result .. c
+        else
+            local pattern = pList:find(string.sub(template, i + 1, #template))
+            if pattern == nil then
+                return nil
+            end
 
-        print(vim.inspect(pattern))
+            result = result .. pattern.execute()
+            i = i + #pattern.name
+        end
+
+        i = i + 1
     end
-    return template
+    return result
 end
 
 return M
