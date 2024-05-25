@@ -10,8 +10,8 @@ local templates = require("headers.templates")
 local test = require("plenary.busted")
 local assert = require("luassert")
 
-local directory = os.getenv("PWD").."/templates"
-require("headers").setup({templates_dir = directory})
+local directory = os.getenv("PWD") .. "/templates"
+require("headers").setup({ templates_dir = directory })
 
 ---@param command string
 local function get_command_output(command)

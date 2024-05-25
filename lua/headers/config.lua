@@ -8,11 +8,11 @@
 local path = require("plenary.path")
 
 ---@class HConfig
----@field templates_dir table|nil
 ---@field merge function
-HConfig = {
-    templates_dir = nil,
-}
+---@field templates_dir table|nil
+---@field email string|nil
+---@field username string|nil
+HConfig = {}
 
 ---@param UserConfig table
 function HConfig:merge(UserConfig)
