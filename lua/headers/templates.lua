@@ -6,48 +6,94 @@
 --
 
 local path = require("plenary.path")
+local s = require("plenary.scandir")
 
----@class Templates
+--------------------Variations
+---@class Variations
+----Methods
+---@field scan function
+---@field new function
 ---@field add function
----@field delete function
-local Templates = {}
+---@field del function
+---@field isVariation function
+---@field getVariationTemplate function
+---@field editVariation function
+----Variables
+---@field path table
+local Variations = {}
 
----@param name string
-function Templates:add(name)
-    if HConfig.templates_dir == nil or not HConfig.templates_dir:is_dir() then
-        print("No/Invalid templates directory specified")
-        return
-    end
+---@param directory string
+---@return Variations
+function Variations:scan(directory)
+    local v = {}
 
-    local new_template_path = path:new(HConfig.templates_dir:joinpath(name))
+    v.path = directory
+    setmetatable(v, Variations)
 
-    if new_template_path:is_dir() then
-        -- Maybe make a flag to bypass this
-        print("Template already exists.")
-        return
-    end
-    new_template_path:mkdir()
+    return v
 end
 
----@param name string
-function Templates:delete(name)
-    if HConfig.templates_dir == nil or not HConfig.templates_dir:is_dir() then
-        print("No/Invalid templates directory specified")
-        return
+--------------------Template
+---@class Template
+----Methods
+---@field scan function
+---@field new function
+---@field del function
+---@field editTemplate function
+----Variables
+---@field name string
+---@field path table
+---@field is_selected boolean
+---@field variations Variations
+local Template = {}
+
+---@param directory string
+---@return Template|nil
+function Template:scan(directory)
+    local p = path:new(directory)
+    if not p:joinpath("variations"):is_dir() then
+        return nil
     end
 
-    local template_path = path:new(HConfig.templates_dir:joinpath(name))
+    local t = {}
+    t.name = vim.split(directory, "//")[2]
+    t.path = path:new(directory)
+    t.is_selected = p:joinpath("selected"):is_file()
+    t.variations = Variations:scan(p:joinpath("variations"))
 
-    if not template_path:is_dir() then
-        print("Template doesn't exist.")
-        return
-    end
+    setmetatable(t, Template)
+    return t
+end
 
-    if template_path:rmdir() == nil then
-        print("Detected error in removing template " .. name)
-    else
-        print("Deleted template: " .. name)
+--------------------TemplateList
+---@class TemplateList
+----Methods
+---@field scan function
+---@field add function
+---@field del function
+---@field find function
+----Variables
+---@field list table[Template]
+local TemplateList = {
+    list = {},
+}
+
+---@param directory string
+function TemplateList:scan(directory)
+    local list = s.scan_dir(directory, { depth = 1, add_dirs = true })
+    assert(list ~= nil, "Given path isn't a directory.")
+
+    for _, dir in pairs(list) do
+        local p = path:new(dir)
+
+        if p:is_dir() then
+            local template = Template:scan(dir)
+
+            if template ~= nil then
+                table.insert(self.list, template)
+            end
+        end
     end
 end
 
-return Templates
+return TemplateList
