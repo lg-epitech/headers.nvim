@@ -22,12 +22,25 @@ local s = require("plenary.scandir")
 ---@field path table
 local Variations = {}
 
----@param directory string
+---@param dir table
 ---@return Variations
-function Variations:scan(directory)
+function Variations:scan(dir)
     local v = {}
 
-    v.path = directory
+    v.path = dir
+    setmetatable(v, Variations)
+
+    return v
+end
+
+---@param dir table
+---@return Variations
+function Variations:new(dir)
+    dir:mkdir()
+
+    local v = {}
+
+    v.path = dir
     setmetatable(v, Variations)
 
     return v
@@ -51,15 +64,40 @@ local Template = {}
 ---@return Template|nil
 function Template:scan(directory)
     local p = path:new(directory)
-    if not p:joinpath("variations"):is_dir() then
+    if
+        not p:joinpath("variations"):is_dir()
+        or not p:joinpath("template.txt"):is_file()
+    then
         return nil
     end
 
     local t = {}
-    t.name = vim.split(directory, "//")[2]
-    t.path = path:new(directory)
+    local split = vim.split(directory, "/")
+    t.name = split[#split]
+    t.path = p
     t.is_selected = p:joinpath("selected"):is_file()
     t.variations = Variations:scan(p:joinpath("variations"))
+
+    setmetatable(t, Template)
+    return t
+end
+
+---@param tName string
+---@param tText string
+---@param tPath table
+---@return Template
+function Template:new(tName, tText, tPath)
+    tPath:mkdir()
+
+    local t = {}
+
+    t.name = tName
+    t.path = tPath
+    t.is_selected = false
+    t.variations = Variations:new(t.path:joinpath("variations"))
+
+    local tFile = path:new(t.path:joinpath("template.txt"))
+    tFile:write(tText, "w")
 
     setmetatable(t, Template)
     return t
@@ -74,6 +112,7 @@ end
 ---@field find function
 ----Variables
 ---@field list table[Template]
+---@field path table
 local TemplateList = {
     list = {},
 }
@@ -94,6 +133,26 @@ function TemplateList:scan(directory)
             end
         end
     end
+end
+
+---@param tName string
+---@param tText string
+---@param tPath string
+---@return boolean
+function TemplateList:add(tName, tText, tPath)
+    local p = path:new(tPath):joinpath(tName)
+    if p:is_dir() then
+        return false
+    end
+
+    local template = Template:new(tName, tText, p)
+
+    if template == nil then
+        return false
+    end
+
+    table.insert(self.list, template)
+    return true
 end
 
 return TemplateList
