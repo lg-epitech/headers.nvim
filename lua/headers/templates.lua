@@ -180,10 +180,17 @@ local TemplateList = {
 
 ---Asserts if path given isn't a directory
 ---@param directory string Parent template dir path
+---@return boolean
 function TemplateList:scan(directory)
-    local list = s.scan_dir(directory, { depth = 1, add_dirs = true })
+    local pa = path:new(directory)
+    if not pa:exists() or not pa:is_dir() then
+        return false
+    end
 
-    assert(list ~= nil, "Given path isn't a directory.")
+    local list = s.scan_dir(directory, { depth = 1, add_dirs = true })
+    if list == nil then
+        return false
+    end
 
     for _, dir in pairs(list) do
         local p = path:new(dir)
@@ -196,6 +203,8 @@ function TemplateList:scan(directory)
             end
         end
     end
+
+    return true
 end
 
 ---@param tName string
@@ -220,15 +229,19 @@ end
 
 ---Asserts if index is invalid
 ---@param idx number
+---@return boolean
 function TemplateList:del(idx)
     ---@type Template
     local template = self.list[idx]
 
-    assert(template ~= nil, "Unknown index given to delete")
+    if template == nil then
+        return false
+    end
 
     template:del()
 
     table.remove(self.list, idx)
+    return true
 end
 
 ---@return number, Template|nil
@@ -244,10 +257,13 @@ end
 
 ---Asserts if index is invalid
 ---@param idx number
+---@return boolean
 function TemplateList:select(idx)
     local template = self.list[idx]
 
-    assert(template ~= nil, "Unknown index given to select")
+    if template == nil then
+        return false
+    end
 
     local i, curr_selected = self:getSelected()
     if curr_selected ~= nil and i ~= idx then
@@ -255,6 +271,7 @@ function TemplateList:select(idx)
     end
 
     template.is_selected = not template.is_selected
+    return true
 end
 
 return TemplateList

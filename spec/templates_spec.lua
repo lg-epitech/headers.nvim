@@ -19,6 +19,14 @@ os.execute(string.format("mv %s %s.back", dir, dir))
 os.execute(string.format("mkdir %s", dir))
 
 test.describe("Templates", function()
+    test.it("Init scan invalid path", function()
+        local success = templates:scan("gertrude")
+        assert.are.equal(false, success)
+
+        success = templates:scan(tostring(dir:joinpath("Makefile")))
+        assert.are.equal(false, success)
+    end)
+
     test.it("Init scan without template.txt", function()
         local t = dir:joinpath("gertrude")
         t:mkdir()
@@ -26,8 +34,10 @@ test.describe("Templates", function()
         local v = t:joinpath("variations")
         v:mkdir()
 
-        templates:scan()
+        templates:scan(tostring(dir))
         assert.are.equal(0, #templates.list)
+
+        t:rm({ recursive = true })
     end)
 
     test.it("Init scan without variations", function()
@@ -38,7 +48,7 @@ test.describe("Templates", function()
         local tp = t:joinpath("template.txt")
         tp:write(tx, "w")
 
-        templates:scan()
+        templates:scan(tostring(dir))
         assert.are.equal(0, #templates.list)
     end)
 
@@ -65,10 +75,17 @@ test.describe("Templates", function()
         )
     end)
 
-    test.it("Del gertrude", function()
-        local tp = templates.list[1]
-        templates:del(1)
+    test.it("Template delete invalid index", function()
+        local success = templates:del(12)
 
+        assert.are.equal(false, success)
+    end)
+
+    test.it("Template delete gertrude", function()
+        local tp = templates.list[1]
+        local success = templates:del(1)
+
+        assert.are.equal(true, success)
         assert.are.equal(false, tp.path:is_dir())
         assert.are.equal(0, #templates.list)
     end)
@@ -174,20 +191,29 @@ test.describe("Templates", function()
         )
     end)
 
+    test.it("Templates invalid index selection", function()
+        local success = templates:select(42)
+
+        assert.are.equal(false, success)
+    end)
+
     test.it("Templates selection", function()
         local _, t = templates:getSelected()
 
         assert.are.equal(nil, t)
 
-        templates:select(1)
+        local success = templates:select(1)
+        assert.are.equal(true, success)
         assert.are.equal(true, templates.list[1].is_selected)
         assert.are.equal(false, templates.list[2].is_selected)
 
-        templates:select(2)
+        success = templates:select(2)
+        assert.are.equal(true, success)
         assert.are.equal(false, templates.list[1].is_selected)
         assert.are.equal(true, templates.list[2].is_selected)
 
-        templates:select(2)
+        success = templates:select(2)
+        assert.are.equal(true, success)
         assert.are.equal(false, templates.list[1].is_selected)
         assert.are.equal(false, templates.list[2].is_selected)
     end)
