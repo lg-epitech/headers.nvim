@@ -14,10 +14,7 @@ local s = require("plenary.scandir")
 ---@field scan function
 ---@field new function
 ---@field add function
----@field del function
----@field isVariation function
----@field getVariationTemplate function
----@field editVariation function
+---@field getString function
 ----Variables
 ---@field path table
 local Variations = {}
@@ -46,13 +43,37 @@ function Variations:new(dir)
     return v
 end
 
+---@param extension string
+---@param tText string
+---@param force boolean
+function Variations:add(extension, tText, force)
+    local vFile = self.path:joinpath(extension)
+
+    if vFile:exists() and not force then
+        return
+    end
+
+    vFile:write(tText, "w")
+end
+
+---@param extension string
+---@return string|nil
+function Variations:getString(extension)
+    local vFile = self.path:joinpath(extension)
+
+    if not vFile:exists() then
+        return nil
+    end
+
+    return vFile:read()
+end
+
 --------------------Template
 ---@class Template
 ----Methods
 ---@field scan function
 ---@field new function
----@field del function
----@field editTemplate function
+---@field edit function
 ----Variables
 ---@field name string
 ---@field path table
@@ -103,20 +124,31 @@ function Template:new(tName, tText, tPath)
     return t
 end
 
+function Template:del()
+    self.path:rmdir()
+end
+
+---@param new_tText string
+function Template:edit(new_tText)
+    local tFile = path:new(self.path:joinpath("template.txt"))
+
+    tFile:write(new_tText, "w")
+end
+
 --------------------TemplateList
 ---@class TemplateList
 ----Methods
 ---@field scan function
 ---@field add function
 ---@field del function
----@field find function
+---@field getSelected function
 ----Variables
 ---@field list table[Template]
----@field path table
 local TemplateList = {
     list = {},
 }
 
+---Asserts if path given isn't a directory
 ---@param directory string
 function TemplateList:scan(directory)
     local list = s.scan_dir(directory, { depth = 1, add_dirs = true })
@@ -153,6 +185,43 @@ function TemplateList:add(tName, tText, tPath)
 
     table.insert(self.list, template)
     return true
+end
+
+---Asserts if index is invalid
+---@param idx number
+function TemplateList:del(idx)
+    local template = self.list[idx]
+
+    assert(template ~= nil, "Unknown index given to delete")
+
+    template:del()
+
+    table.remove(self.list, idx)
+end
+
+---@return Template|nil
+function TemplateList:getSelected()
+    for _, t in pairs(self.list) do
+        if t.is_selected then
+            return t
+        end
+    end
+
+    return nil
+end
+
+---Asserts if index is invalid
+---@param idx number
+function TemplateList:select(idx)
+    local template = self.list[idx]
+    assert(template ~= nil, "Unknown index given to select")
+
+    local curr_selected = self:getSelected()
+    if curr_selected ~= nil then
+        curr_selected.is_selected = false
+    end
+
+    template.is_selected = true
 end
 
 return TemplateList
