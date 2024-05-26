@@ -7,6 +7,7 @@
 
 local path = require("plenary.path")
 local s = require("plenary.scandir")
+local utils = require("headers.utils")
 
 --------------------Variations
 ---@class Variations
@@ -202,7 +203,7 @@ end
 ---@param tPath string
 ---@return boolean
 function TemplateList:add(tName, tText, tPath)
-    local p = path:new(tPath):joinpath(tName) -- TODO: sanitize tName for path
+    local p = path:new(tPath):joinpath(utils.sanitize_path(tName))
     if p:is_dir() then
         return false
     end
