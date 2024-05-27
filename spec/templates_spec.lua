@@ -147,6 +147,40 @@ test.describe("Templates", function()
         assert.are.equal(false, tp1.path:is_dir())
     end)
 
+    test.it("Add template name edge cases", function()
+        local name
+
+        name = "complete*"
+        templates:add(name, "o", tostring(dir))
+        assert.are.equal(1, #templates.list)
+        assert.are.equal("complete", templates.list[1].name)
+        templates:del(1)
+
+        name = "o//k"
+        templates:add(name, "o", tostring(dir))
+        assert.are.equal(1, #templates.list)
+        assert.are.equal("ok", templates.list[1].name)
+        templates:del(1)
+
+        name = "~this is \\a\ntest"
+        templates:add(name, "o", tostring(dir))
+        assert.are.equal(1, #templates.list)
+        assert.are.equal("this_is_a-test", templates.list[1].name)
+        templates:del(1)
+
+        local success
+
+        name = ""
+        success = templates:add(name, "o", tostring(dir))
+        assert.are.equal(false, success)
+
+        name = "/~\\"
+        success = templates:add(name, "o", tostring(dir))
+        assert.are.equal(false, success)
+
+        assert.are.equal(0, #templates.list)
+    end)
+
     test.it("Add template", function()
         local name = "gertrude"
         local text = "Gertrude is otherwise known for her services :)"

@@ -212,7 +212,12 @@ end
 ---@param tPath string
 ---@return boolean
 function TemplateList:add(tName, tText, tPath)
-    local p = path:new(tPath):joinpath(utils.sanitize_path(tName))
+    tName = utils.sanitize_name(tName)
+    if #tName == 0 then
+        return false
+    end
+
+    local p = path:new(tPath):joinpath(tName)
     if p:is_dir() then
         return false
     end
