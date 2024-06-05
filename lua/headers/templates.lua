@@ -6,302 +6,244 @@
 --
 
 local path = require("plenary.path")
-local s = require("plenary.scandir")
+local scan = require("plenary.scandir")
 local utils = require("headers.utils")
 
---------------------Variations
----@class Variations
-----Methods
----@field scan function
----@field new function
----@field add function
----@field del function
----@field getString function
-----Variables
----@field path table
-local Variations = {}
-Variations.__index = Variations
+local storage_path = vim.fn.stdpath("data") .. "/headers"
 
----@param dir table
----@return Variations
-function Variations:scan(dir)
-    local v = {}
+local M = {}
 
-    v.path = dir
-    setmetatable(v, Variations)
-
-    return v
-end
-
----@param dir table
----@return Variations
-function Variations:new(dir)
-    dir:mkdir()
-
-    local v = {}
-
-    v.path = dir
-    setmetatable(v, Variations)
-
-    return v
-end
+---@class variant
+---@field extension string
+---@field replacement string
+---@field opts table
+local variant = {}
+variant.__index = variant
 
 ---@param extension string
----@param tText string
----@param force boolean
-function Variations:add(extension, tText, force)
-    local vFile = self.path:joinpath(string.lower(extension))
+---@param replacement string
+---@param opts table
+---@return variant
+function variant:new(extension, replacement, opts)
+    local new_variant = {}
 
-    if vFile:exists() and not force then
-        return
-    end
+    new_variant.extension = extension
+    new_variant.replacement = replacement
+    new_variant.opts = opts or {}
 
-    vFile:write(tText, "w")
+    setmetatable(new_variant, variant)
+    return new_variant
 end
 
-function Variations:del(extension)
-    local vFile = self.path:joinpath(string.lower(extension))
-
-    if not vFile:exists() then
-        return
-    end
-
-    vFile:rm()
-end
-
----@param extension string
----@return string|nil
-function Variations:getString(extension)
-    local vFile = self.path:joinpath(string.lower(extension))
-
-    if not vFile:exists() then
-        return nil
-    end
-
-    return vFile:read()
-end
-
---------------------Template
----@class Template
-----Methods
----@field scan function
----@field new function
----@field edit function
----@field getString function
-----Variables
+---@class template
 ---@field name string
----@field path table
+---@field text string
 ---@field is_selected boolean
----@field variations Variations
-local Template = {}
-Template.__index = Template -- Magic with table lookup and methods, lua dumb
+---@field path string
+---@field opts table
+---@field variations table<variant>
+local template = {}
+template.__index = template
 
----@param directory string
----@return Template|nil
-function Template:scan(directory)
-    local p = path:new(directory)
+---@param file string
+---@return template|nil
+function template:scan(file)
+    local p = path:new(file)
+
+    local contents = p:read()
+    local t = vim.json.decode(contents)
+
     if
-        not p:joinpath("variations"):is_dir()
-        or not p:joinpath("template.txt"):exists()
+        t.name == nil
+        or t.text == nil
+        or t.is_selected == nil
+        or t.path == nil
+        or t.variations == nil
+        or t.opts == nil
     then
+        print(string.format("Found invalid template: %s", file))
         return nil
     end
 
-    local t = {}
-    local split = vim.split(directory, "/")
-    t.name = split[#split]
-    t.path = p
-    t.is_selected = p:joinpath("selected"):exists()
-    t.variations = Variations:scan(p:joinpath("variations"))
-
-    setmetatable(t, Template)
+    setmetatable(t, template)
     return t
 end
 
----@param tName string
----@param tText string
----@param tPath table
----@return Template
-function Template:new(tName, tText, tPath)
-    tPath:mkdir()
+---@param name string
+---@param text string
+---@param opts table
+---@return template
+function template:new(name, text, opts)
+    local new_template = {}
 
-    local t = {}
+    new_template.name = name
+    new_template.text = text
+    new_template.is_selected = false
+    new_template.variations = {}
+    new_template.opts = opts or {}
 
-    t.name = tName
-    t.path = tPath
-    t.is_selected = false
-    t.variations = Variations:new(t.path:joinpath("variations"))
+    local p = path:new(storage_path):joinpath(utils.hash_string(name) .. ".txt")
+    new_template.path = p.filename
 
-    local tFile = path:new(t.path:joinpath("template.txt"))
-    tFile:write(tText, "w")
+    local contents = vim.json.encode(new_template)
+    p:write(contents, "w")
+    setmetatable(new_template, template)
 
-    setmetatable(t, Template)
-    return t
+    return new_template
 end
 
-function Template:del()
-    self.path:rm({ recursive = true })
-end
+---@return string, table
+function template:get_info()
+    local extension = string.lower(utils.get_extension())
+    for _, var in ipairs(self.variations) do
+        if var.extension == extension then
+            return var.replacement, var.opts
+        end
+    end
 
----@param new_tText string
-function Template:edit(new_tText)
-    local tFile = path:new(self.path:joinpath("template.txt"))
-
-    tFile:write(new_tText, "w")
+    return self.text, self.opts
 end
 
 ---@param extension string
----@return string
-function Template:getString(extension)
-    local variation = self.variations:getString(extension)
+---@param text string
+---@param opts table
+function template:add_variant(extension, text, opts)
+    extension = string.lower(extension)
+    for _, var in ipairs(self.variations) do
+        if var.extension == extension then
+            var.replacement = text
+            var.opts = opts or {}
 
-    if variation ~= nil then
-        return variation
-    end
+            local p = path:new(self.path)
 
-    local tFile = path:new(self.path:joinpath("template.txt"))
-
-    return tFile:read()
-end
-
---------------------TemplateList
----@class TemplateList
-----Methods
----@field scan function
----@field add function
----@field del function
----@field select function
----@field getSelected function
----@field find function
-----Variables
----@field list table[Template]
-local TemplateList = {
-    list = {},
-}
-
----Asserts if path given isn't a directory
----@return boolean
-function TemplateList:scan()
-    local directory = vim.fn.stdpath("data")
-
-    local pa = path:new(directory)
-    if not pa:exists() or not pa:is_dir() then
-        return false
-    end
-
-    local list = s.scan_dir(directory, { depth = 1, add_dirs = true })
-    if list == nil then
-        return false
-    end
-
-    for _, dir in pairs(list) do
-        local p = path:new(dir)
-
-        if p:is_dir() then
-            local template = Template:scan(dir)
-
-            if template ~= nil then
-                table.insert(self.list, template)
-            end
+            local contents = vim.json.encode(setmetatable(self, {}))
+            p:write(contents, "w")
+            setmetatable(self, template)
+            return
         end
     end
 
-    return true
+    table.insert(self.variations, variant:new(extension, text, opts))
+    local p = path:new(self.path)
+
+    local contents = vim.json.encode(setmetatable(self, {}))
+    setmetatable(self, template)
+    p:write(contents, "w")
 end
 
----@param tName string
----@return number
-function TemplateList:find(tName)
-    tName = utils.sanitize_name(tName)
+---@type table<template>
+M.list = {}
 
-    for i, templ in pairs(self.list) do
-        if tName == templ.name then
-            return i
-        end
-    end
-
-    return 0
-end
-
----@param tName string
----@param tText string
----@return boolean
-function TemplateList:add(tName, tText)
-    tName = utils.sanitize_name(tName)
-    if #tName == 0 then
-        return false
-    end
-
-    local tPath = vim.fn.stdpath("data") .. "/headers"
-
-    local p = path:new(tPath):joinpath(tName)
-    if p:is_dir() then
-        local idx = self:find(tName)
-        self:del(idx)
-    end
-
-    local template = Template:new(tName, tText, p)
-
-    if template == nil then
-        return false
-    end
-
-    table.insert(self.list, template)
-    return true
-end
-
----Asserts if index is invalid
----@param idx number
----@return boolean
-function TemplateList:del(idx)
-    ---@type Template
-    local template = self.list[idx]
-
-    if template == nil then
-        return false
-    end
-
-    template:del()
-
-    table.remove(self.list, idx)
-    return true
-end
-
----@return number, Template|nil
-function TemplateList:getSelected()
-    for i, t in pairs(self.list) do
-        if t.is_selected then
-            return i, t
+---@param name string
+---@return number, template|nil
+M.find = function(name)
+    for i, templ in ipairs(M.list) do
+        if templ.name == name then
+            return i, templ
         end
     end
 
     return 0, nil
 end
 
----Asserts if index is invalid
----@param tName string|number
+M.scan = function()
+    local list = scan.scan_dir(storage_path, { depth = 1 })
+
+    for _, file in pairs(list) do
+        local t = template:scan(file)
+
+        if t ~= nil then
+            local i, collision = M.find(t.name)
+
+            if collision ~= nil then
+                M.remove(i)
+            end
+
+            table.insert(M.list, t)
+        end
+    end
+end
+
+---@param name string
+---@param text string
+---@param opts table
 ---@return boolean
-function TemplateList:select(tName)
-    local idx
-    if type(tName) == "number" then
-        idx = tName
-    else
-        idx = self:find(tName)
+M.add = function(name, text, opts)
+    local i, collision = M.find(name)
+
+    if collision ~= nil then
+        M.remove(i)
     end
 
-    local template = self.list[idx]
+    local t = template:new(name, text, opts)
+    table.insert(M.list, t)
 
-    if template == nil then
-        return false
-    end
-
-    local i, curr_selected = self:getSelected()
-    if curr_selected ~= nil and i ~= idx then
-        curr_selected.is_selected = false
-    end
-
-    template.is_selected = not template.is_selected
     return true
 end
 
-return TemplateList
+---@param idx number
+---@return boolean
+M.remove = function(idx)
+    local templ = M.list[idx]
+    if templ == nil then
+        return false
+    end
+
+    local tpath = path:new(templ.path)
+    tpath:rm()
+
+    table.remove(M.list, idx)
+
+    return true
+end
+
+---@return template|nil
+M.getSelected = function()
+    for _, templ in ipairs(M.list) do
+        if templ.is_selected then
+            return templ
+        end
+    end
+
+    return nil
+end
+
+---@param name string
+---@return boolean
+M.select = function(name)
+    local curr_selected = M.getSelected()
+    local _, templ = M.find(name)
+
+    if templ == nil then
+        print(string.format("Could not select %s", name))
+        return false
+    end
+
+    if curr_selected ~= nil then
+        curr_selected.is_selected = false
+        if curr_selected.name == name then
+            return true
+        end
+    end
+
+    templ.is_selected = true
+    return true
+end
+
+---@param template_name string
+---@param extension string
+---@param text string
+---@param opts table
+---@return boolean
+M.add_variant = function(template_name, extension, text, opts)
+    local _, templ = M.find(template_name)
+    if templ == nil then
+        return false
+    end
+
+    templ:add_variant(extension, text, opts)
+
+    return true
+end
+
+return M
