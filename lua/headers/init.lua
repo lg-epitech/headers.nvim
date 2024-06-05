@@ -27,7 +27,7 @@ M.setup = function(opts)
     HConfig:merge(opts)
 
     local templates = require("headers.templates")
-    templates:scan()
+    templates.scan()
 
     require("headers.commands")
 end
