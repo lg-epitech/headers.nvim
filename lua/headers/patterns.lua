@@ -5,6 +5,8 @@
 -- patterns.lua
 --
 
+local comments = require("headers.comments")
+
 local M = {}
 
 -- NOTE: Patterns
@@ -204,6 +206,52 @@ M.format = function(template)
         i = i + 1
     end
     return result
+end
+
+---@param pattern string
+---@param ft string
+---@return table|nil
+M.generalize = function(pattern, ft)
+    ft = string.lower(ft)
+
+    local CommentType = comments.find(ft)
+    if CommentType == nil then
+        print(string.format("Comment type not recognized for %s filetype.", ft))
+        return nil
+    end
+
+    local split = vim.split(pattern, "\n")
+
+    for _ = 1, HConfig.padding do
+        table.insert(split, "")
+        table.insert(split, 1, "")
+    end
+
+    for i, line in pairs(split) do
+        ---@type string
+        local prefix
+
+        if i == 1 then
+            prefix = CommentType.head or CommentType.middle
+        elseif i == #split then
+            prefix = CommentType.tail or CommentType.middle
+        else
+            prefix = CommentType.middle
+        end
+
+        if #line ~= 0 then
+            prefix = prefix .. HConfig.separation
+        end
+        split[i] = prefix .. line
+    end
+
+    return split
+end
+
+---@param pattern_split table
+---@return boolean
+M.insert = function(pattern_split)
+    return pcall(vim.api.nvim_buf_set_lines, 0, 0, 0, true, pattern_split)
 end
 
 return M
