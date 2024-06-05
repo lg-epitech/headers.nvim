@@ -172,6 +172,7 @@ end
 ---@field del function
 ---@field select function
 ---@field getSelected function
+---@field find function
 ----Variables
 ---@field list table[Template]
 local TemplateList = {
@@ -208,6 +209,20 @@ function TemplateList:scan(directory)
 end
 
 ---@param tName string
+---@return number
+function TemplateList:find(tName)
+    tName = utils.sanitize_name(tName)
+
+    for i, templ in pairs(self.list) do
+        if tName == templ.name then
+            return i
+        end
+    end
+
+    return 0
+end
+
+---@param tName string
 ---@param tText string
 ---@param tPath string
 ---@return boolean
@@ -219,7 +234,8 @@ function TemplateList:add(tName, tText, tPath)
 
     local p = path:new(tPath):joinpath(tName)
     if p:is_dir() then
-        return false
+        local idx = self:find(tName)
+        self:del(idx)
     end
 
     local template = Template:new(tName, tText, p)
@@ -261,12 +277,14 @@ function TemplateList:getSelected()
 end
 
 ---Asserts if index is invalid
----@param idx number
+---@param tName string
 ---@return boolean
-function TemplateList:select(idx)
+function TemplateList:select(tName)
+    local idx = self:find(tName)
     local template = self.list[idx]
 
     if template == nil then
+        print(string.format("Name: %s\nIdx: %d\n", tName, idx))
         return false
     end
 

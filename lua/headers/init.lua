@@ -20,7 +20,7 @@ local M = {
 M.setup = function(opts)
     HConfig:merge(opts)
 
-    vim.inspect(HConfig)
+    require("headers.commands")
 end
 
 return M
