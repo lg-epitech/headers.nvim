@@ -27,4 +27,15 @@ M.sanitize_name = function(name)
     return name
 end
 
+---@return string
+M.get_extension = function()
+    local ext = vim.fn.expand("%:e")
+
+    if #ext == 0 then
+        return vim.fn.expand("%:t:r")
+    else
+        return ext
+    end
+end
+
 return M
