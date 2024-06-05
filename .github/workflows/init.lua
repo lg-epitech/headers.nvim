@@ -14,19 +14,15 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
     spec = {
         {
-            "lg-epitech/headers.nvim",
+            "headers.nvim",
             dependencies = { "nvim-lua/plenary.nvim" },
-            dir = "/home/runner/headers.nvim",
+            dir = "/home/runner/work/headers.nvim/headers.nvim",
 
             opts = {
-                templates_dir = "/home/runner/headers.nvim/templates"
+                templates_dir = "/home/runner/work/headers.nvim/headers.nvim/templates"
             }
         },
     },
-    install = {
-        colorscheme = {"darkplus", "default"},
-    },
-    ui = { border = "rounded" },
     change_detection = {
         enabled = true,
         notify = false,

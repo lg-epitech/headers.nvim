@@ -5,20 +5,36 @@
 -- config.lua
 --
 
-local path = require("plenary.path")
+local comments = require("headers.comments")
 
 ---@class HConfig
----@field templates_dir table|nil
 ---@field merge function
+---@field email string|nil
+---@field username string|nil
+---@field comments table<comment>
 HConfig = {
-    templates_dir = nil,
+    comments = comments.list,
+    padding = 0,
+    separation = " ",
 }
+
+---Merges t2 into t1
+---@param t1 table
+---@param t2 table
+---@return table
+local function merge_table(t1, t2)
+    for name, setting in pairs(t2) do
+        if type(setting) == "table" then
+            t1[name] = merge_table(t1[name] or {}, setting)
+        else
+            t1[name] = setting
+        end
+    end
+
+    return t1
+end
 
 ---@param UserConfig table
 function HConfig:merge(UserConfig)
-    for name, setting in pairs(UserConfig) do
-        self[name] = setting
-    end
-
-    self.templates_dir = path:new(self.templates_dir)
+    HConfig = merge_table(HConfig, UserConfig)
 end
