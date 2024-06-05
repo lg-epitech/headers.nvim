@@ -9,8 +9,8 @@ local M = {}
 
 ---@param name string
 ---@return string
-M.hash_string = function(name) -- TODO:
-    return name
+M.hash_string = function(name)
+    return vim.fn.sha256(name)
 end
 
 ---@return string
