@@ -7,7 +7,7 @@
 
 -- NOTE: This is the default configuration
 
-require("headers.config")
+local path = require("plenary.path")
 
 local M = {
     _NAME = "headers.nvim",
@@ -18,7 +18,16 @@ local M = {
 
 ---@param opts table
 M.setup = function(opts)
+    local hPath = path:new(vim.fn.stdpath("data") .. "/headers")
+    if hPath:is_dir() == false then
+        hPath:mkdir()
+    end
+
+    require("headers.config")
     HConfig:merge(opts)
+
+    local templates = require("headers.templates")
+    templates:scan()
 
     require("headers.commands")
 end

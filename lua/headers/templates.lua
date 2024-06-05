@@ -180,9 +180,10 @@ local TemplateList = {
 }
 
 ---Asserts if path given isn't a directory
----@param directory string Parent template dir path
 ---@return boolean
-function TemplateList:scan(directory)
+function TemplateList:scan()
+    local directory = vim.fn.stdpath("data")
+
     local pa = path:new(directory)
     if not pa:exists() or not pa:is_dir() then
         return false
@@ -224,13 +225,14 @@ end
 
 ---@param tName string
 ---@param tText string
----@param tPath string
 ---@return boolean
-function TemplateList:add(tName, tText, tPath)
+function TemplateList:add(tName, tText)
     tName = utils.sanitize_name(tName)
     if #tName == 0 then
         return false
     end
+
+    local tPath = vim.fn.stdpath("data") .. "/headers"
 
     local p = path:new(tPath):joinpath(tName)
     if p:is_dir() then
@@ -277,14 +279,19 @@ function TemplateList:getSelected()
 end
 
 ---Asserts if index is invalid
----@param tName string
+---@param tName string|number
 ---@return boolean
 function TemplateList:select(tName)
-    local idx = self:find(tName)
+    local idx
+    if type(tName) == "number" then
+        idx = tName
+    else
+        idx = self:find(tName)
+    end
+
     local template = self.list[idx]
 
     if template == nil then
-        print(string.format("Name: %s\nIdx: %d\n", tName, idx))
         return false
     end
 

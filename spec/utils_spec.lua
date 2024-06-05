@@ -30,4 +30,21 @@ test.describe("Utils", function()
         output = utils.sanitize_name(name)
         assert.are.equal("uuh", output)
     end)
+
+    test.it("Get extension", function()
+        local expected
+        local output
+
+        vim.api.nvim_command(":e Makefile")
+        expected = "Makefile"
+        output = utils.get_extension()
+
+        assert.are.equal(expected, output)
+
+        vim.api.nvim_command(":e main.c")
+        expected = "c"
+        output = utils.get_extension()
+
+        assert.are.equal(expected, output)
+    end)
 end)
