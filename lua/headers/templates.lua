@@ -114,16 +114,16 @@ function template:add_variant(extension, text, opts)
             var.replacement = text
             var.opts = opts or {}
 
-            local p = path:new(self.path)
-
-            local contents = vim.json.encode(setmetatable(self, {}))
-            p:write(contents, "w")
-            setmetatable(self, template)
+            self:save()
             return
         end
     end
 
     table.insert(self.variations, variant:new(extension, text, opts))
+    self:save()
+end
+
+function template:save()
     local p = path:new(self.path)
 
     local contents = vim.json.encode(setmetatable(self, {}))
@@ -153,12 +153,6 @@ M.scan = function()
         local t = template:scan(file)
 
         if t ~= nil then
-            local i, collision = M.find(t.name)
-
-            if collision ~= nil then
-                M.remove(i)
-            end
-
             table.insert(M.list, t)
         end
     end
@@ -221,12 +215,14 @@ M.select = function(name)
 
     if curr_selected ~= nil then
         curr_selected.is_selected = false
+        curr_selected:save()
         if curr_selected.name == name then
             return true
         end
     end
 
     templ.is_selected = true
+    templ:save()
     return true
 end
 
