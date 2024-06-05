@@ -19,7 +19,7 @@ cmd("InsertSelectedHeader", function()
     end
 
     local extension = utils.get_extension()
-    local template_string = template:getString()
+    local template_string, opts = template:get_info()
     if template_string == nil then
         print("Template string not found.")
         return
@@ -30,7 +30,7 @@ cmd("InsertSelectedHeader", function()
         print("Error while parsing patterns.")
         return
     end
-    local template_split = patterns.generalize(formatted, extension)
+    local template_split = patterns.generalize(formatted, extension, opts)
     if template_split == nil then
         print("Error while generalizing pattern.")
         return

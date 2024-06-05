@@ -210,8 +210,9 @@ end
 
 ---@param pattern string
 ---@param ft string
+---@param opts table
 ---@return table|nil
-M.generalize = function(pattern, ft)
+M.generalize = function(pattern, ft, opts)
     ft = string.lower(ft)
 
     local CommentType = comments.find(ft)
@@ -222,7 +223,7 @@ M.generalize = function(pattern, ft)
 
     local split = vim.split(pattern, "\n")
 
-    for _ = 1, HConfig.padding do
+    for _ = 1, opts.padding or 0 do
         table.insert(split, "")
         table.insert(split, 1, "")
     end
@@ -240,7 +241,7 @@ M.generalize = function(pattern, ft)
         end
 
         if #line ~= 0 then
-            prefix = prefix .. HConfig.separation
+            prefix = prefix .. (opts.separation or "")
         end
         split[i] = prefix .. line
     end

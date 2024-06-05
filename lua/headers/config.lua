@@ -12,8 +12,6 @@ local comments = require("headers.comments")
 ---@field email string|nil
 ---@field username string|nil
 ---@field comments table<comment>
----@field padding number
----@field separation string
 HConfig = {
     comments = comments.list,
     padding = 0,
