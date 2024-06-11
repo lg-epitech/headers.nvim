@@ -14,41 +14,41 @@ local storage_path = vim.fn.stdpath("data") .. "/headers"
 
 local M = {}
 
----@class variant
+---@class TemplateVariation
 ---@field extension string
 ---@field replacement string
 ---@field opts table
-local variant = {}
-variant.__index = variant
+local _variant = {}
+_variant.__index = _variant
 
 ---@param extension string
 ---@param replacement string
 ---@param opts table
----@return variant
-function variant:new(extension, replacement, opts)
+---@return TemplateVariation
+function _variant:new(extension, replacement, opts)
     local new_variant = {}
 
     new_variant.extension = extension
     new_variant.replacement = replacement
     new_variant.opts = opts or {}
 
-    setmetatable(new_variant, variant)
+    setmetatable(new_variant, _variant --[[@as table]])
     return new_variant
 end
 
----@class template
+---@class Template
 ---@field name string
 ---@field text string
 ---@field is_selected boolean
 ---@field path string
 ---@field opts table
----@field variations table<variant>
-local template = {}
-template.__index = template
+---@field variations table<TemplateVariation>
+local _template = {}
+_template.__index = _template
 
 ---@param file string
----@return template|nil
-function template:scan(file)
+---@return Template|nil
+function _template:scan(file)
     local p = path:new(file)
 
     local contents = p:read()
@@ -66,15 +66,15 @@ function template:scan(file)
         return nil
     end
 
-    setmetatable(t, template)
+    setmetatable(t, _template --[[@as table]])
     return t
 end
 
 ---@param name string
 ---@param text string
 ---@param opts table
----@return template
-function template:new(name, text, opts)
+---@return Template
+function _template:new(name, text, opts)
     local new_template = {}
 
     new_template.name = name
@@ -88,13 +88,13 @@ function template:new(name, text, opts)
 
     local contents = vim.json.encode(new_template)
     p:write(contents, "w")
-    setmetatable(new_template, template)
+    setmetatable(new_template, _template --[[@as table]])
 
     return new_template
 end
 
 ---@return string, table
-function template:get_info()
+function _template:get_info()
     local extension = string.lower(utils.get_extension())
     for _, var in ipairs(self.variations) do
         if var.extension == extension then
@@ -108,7 +108,7 @@ end
 ---@param extension string
 ---@param text string
 ---@param opts table
-function template:add_variant(extension, text, opts)
+function _template:add_variant(extension, text, opts)
     extension = string.lower(extension)
     for _, var in ipairs(self.variations) do
         if var.extension == extension then
@@ -120,23 +120,23 @@ function template:add_variant(extension, text, opts)
         end
     end
 
-    table.insert(self.variations, variant:new(extension, text, opts))
+    table.insert(self.variations, _variant:new(extension, text, opts))
     self:save()
 end
 
-function template:save()
+function _template:save()
     local p = path:new(self.path)
 
     local contents = vim.json.encode(setmetatable(self, {}))
-    setmetatable(self, template)
+    setmetatable(self, _template --[[@as table]])
     p:write(contents, "w")
 end
 
----@type table<template>
+---@type table<Template>
 M.list = {}
 
 ---@param name string
----@return number, template|nil
+---@return number, Template|nil
 M.find = function(name)
     for i, templ in ipairs(M.list) do
         if templ.name == name then
@@ -151,7 +151,7 @@ M.scan = function()
     local list = scan.scan_dir(storage_path, { depth = 1 })
 
     for _, file in pairs(list) do
-        local t = template:scan(file)
+        local t = _template:scan(file)
 
         if t ~= nil then
             table.insert(M.list, t)
@@ -170,7 +170,7 @@ M.add = function(name, text, opts)
         M.remove(i)
     end
 
-    local t = template:new(name, text, opts)
+    local t = _template:new(name, text, opts)
     table.insert(M.list, t)
 
     return true
@@ -192,7 +192,7 @@ M.remove = function(idx)
     return true
 end
 
----@return template|nil
+---@return Template|nil
 M.getSelected = function()
     for _, templ in ipairs(M.list) do
         if templ.is_selected then
