@@ -8,6 +8,7 @@
 local path = require("plenary.path")
 local scan = require("plenary.scandir")
 local utils = require("headers.utils")
+local patterns = require("headers.patterns")
 
 local storage_path = vim.fn.stdpath("data") .. "/headers"
 
@@ -240,6 +241,47 @@ M.add_variant = function(template_name, extension, text, opts)
     templ:add_variant(extension, text, opts)
 
     return true
+end
+
+M.insert = function()
+    local templ = M.getSelected()
+    if templ == nil then
+        print("You don't have a selected header.")
+        return
+    end
+
+    local extension = utils.get_extension()
+    local template_string, opts = templ:get_info()
+    if template_string == nil then
+        print("Template string not found.")
+        return
+    end
+
+    local formatted = patterns.format(template_string)
+    if formatted == nil then
+        print("Error while parsing patterns.")
+        return
+    end
+    local template_split = patterns.generalize(formatted, extension, opts)
+    if template_split == nil then
+        print("Error while generalizing pattern.")
+        return
+    end
+
+    local success = patterns.insert(template_split)
+    if success == false then
+        print("Could not insert header.")
+    end
+end
+
+M.getNames = function()
+    local names = {} ---@type table<string>
+
+    for _, templ in ipairs(M.list) do
+        table.insert(names, templ.name)
+    end
+
+    return names
 end
 
 return M

@@ -213,6 +213,7 @@ end
 ---@param opts table
 ---@return table|nil
 M.generalize = function(pattern, ft, opts)
+    opts = opts or {}
     ft = string.lower(ft)
 
     local CommentType = comments.find(ft)

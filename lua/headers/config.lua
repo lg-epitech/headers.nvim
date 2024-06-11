@@ -9,6 +9,8 @@ local comments = require("headers.comments")
 
 ---@class HConfig
 ---@field merge function
+---@field width number
+---@field height number
 ---@field email string|nil
 ---@field username string|nil
 ---@field comments table<comment>
