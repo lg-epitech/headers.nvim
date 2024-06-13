@@ -274,7 +274,7 @@ M.insert = function()
     end
 end
 
-M.getNames = function()
+M.get_names = function()
     local names = {} ---@type table<string>
 
     for _, templ in ipairs(M.list) do
