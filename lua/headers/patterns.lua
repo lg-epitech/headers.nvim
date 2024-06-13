@@ -251,9 +251,17 @@ M.generalize = function(pattern, ft, opts)
 end
 
 ---@param pattern_split table
+---@param buff? integer
 ---@return boolean
-M.insert = function(pattern_split)
-    return pcall(vim.api.nvim_buf_set_lines, 0, 0, 0, true, pattern_split)
+M.insert = function(pattern_split, buff)
+    return pcall(
+        vim.api.nvim_buf_set_lines,
+        buff or 0,
+        0,
+        0,
+        true,
+        pattern_split
+    )
 end
 
 return M

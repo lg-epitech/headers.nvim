@@ -6,6 +6,7 @@
 --
 
 local templates = require("headers.templates")
+local patterns = require("headers.patterns")
 local popup = require("plenary.popup")
 
 -- TODO: Interface
@@ -91,7 +92,11 @@ function ui:open_preview_window()
         title = "Preview",
         highlight = "HeadersPreview",
         line = math.floor(((vim.o.lines - preview_height) / 2) - help_height),
-        col = math.floor((vim.o.columns - (preview_width + list_width)) / 2 + list_width + padding),
+        col = math.floor(
+            (vim.o.columns - (preview_width + list_width)) / 2
+                + list_width
+                + padding
+        ),
         minwidth = preview_width,
         minheight = preview_height,
         borderchars = borders,
@@ -112,7 +117,9 @@ function ui:open_help_window()
     self.help_winnr, self.help_win = popup.create(self.help_bufh, {
         title = "Help",
         highlight = "HeadersHelp",
-        line = math.floor((vim.o.lines - help_height) / 2 + preview_height / 2 + padding),
+        line = math.floor(
+            (vim.o.lines - help_height) / 2 + preview_height / 2 + padding
+        ),
         col = math.floor((vim.o.columns - help_width) / 2),
         minwidth = help_width + padding,
         minheight = help_height,
@@ -135,8 +142,76 @@ function ui:open()
     self:open_list_window()
 
     local names = templates.get_names()
-
     vim.api.nvim_buf_set_lines(self.list_bufh, 0, #names, false, names)
+
+    self:render_preview()
+end
+
+function ui:render_preview()
+    vim.api.nvim_buf_set_lines(self.preview_bufh, 0, -1, false, { "" })
+
+    local line = vim.api.nvim_win_get_cursor(self.list_winnr)[1] ---@type integer
+    local l = vim.api.nvim_buf_get_lines(self.list_bufh, line - 1, line, true) ---@type table<string>
+    local _, template = templates.find(l[1])
+
+    if template == nil then
+        vim.api.nvim_buf_set_lines(
+            self.preview_bufh,
+            0,
+            1,
+            false,
+            { "Error: The template wasn't found." }
+        )
+        return
+    end
+
+    local extension = "c" -- TODO: Make random
+    local template_string, opts = template:get_info()
+
+    if template_string == nil then
+        vim.api.nvim_buf_set_lines(
+            self.preview_bufh,
+            0,
+            1,
+            false,
+            { "Error: Template string not found." }
+        )
+        return
+    end
+
+    local formatted = patterns.format(template_string)
+
+    if formatted == nil then
+        vim.api.nvim_buf_set_lines(
+            self.preview_bufh,
+            0,
+            1,
+            false,
+            { "Error: Pattern parsing failed." }
+        )
+        return
+    end
+
+    local template_split = patterns.generalize(formatted, extension, opts)
+
+    if template_split == nil then
+        vim.api.nvim_buf_set_lines(
+            self.preview_bufh,
+            0,
+            1,
+            false,
+            { "Error: Generalization of the template failed." }
+        )
+        return
+    end
+
+    local _ = patterns.insert(template_split, self.preview_bufh)
+
+    vim.api.nvim_set_option_value(
+        "filetype",
+        extension,
+        { buf = self.preview_bufh }
+    )
 end
 
 function ui:close_list_window()
@@ -185,7 +260,9 @@ function ui:close()
 end
 
 function ui:toggle()
-    if self.list_win == nil or not vim.api.nvim_win_is_valid(self.list_winnr) then
+    if
+        self.list_win == nil or not vim.api.nvim_win_is_valid(self.list_winnr)
+    then
         self:open()
     else
         self:close()
