@@ -8,8 +8,7 @@
 local templates = require("headers.templates")
 local patterns = require("headers.patterns")
 local popup = require("plenary.popup")
-
--- TODO: Interface
+local utils = require("headers.utils")
 
 ---@class headers_ui
 ---@field list_bufh? integer
@@ -165,7 +164,7 @@ function ui:render_preview()
         return
     end
 
-    local extension = "c" -- TODO: Make random
+    local extension = utils.random_extension()
     local template_string, opts = template:get_info()
 
     if template_string == nil then
@@ -192,17 +191,24 @@ function ui:render_preview()
         return
     end
 
-    local template_split = patterns.generalize(formatted, extension, opts)
 
-    if template_split == nil then
-        vim.api.nvim_buf_set_lines(
-            self.preview_bufh,
-            0,
-            1,
-            false,
-            { "Error: Generalization of the template failed." }
-        )
-        return
+    local template_split ---@type table<string>|nil
+
+    if opts.generalize == true then
+        template_split = patterns.generalize(formatted, extension, opts)
+
+        if template_split == nil then
+            vim.api.nvim_buf_set_lines(
+                self.preview_bufh,
+                0,
+                1,
+                false,
+                { "Error: Generalization of the template failed." }
+            )
+            return
+        end
+    else
+        template_split = vim.split(formatted, "\n")
     end
 
     local _ = patterns.insert(template_split, self.preview_bufh)

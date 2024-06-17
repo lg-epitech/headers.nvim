@@ -64,6 +64,7 @@ local __comments = {
     comment:new({ "gleam" }, { middle = "//" }),
     comment:new({ "jl" }, { head = "#=", middle = "==", tail = "=#" }),
     comment:new({ "ml" }, { head = "(*", middle = "**", tail = "*)" }),
+    comment:new({ "md" }, { head = "<!--", middle = "--", tail = "-->" }),
 }
 -- stylua: ignore end
 

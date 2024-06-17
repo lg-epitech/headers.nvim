@@ -262,10 +262,16 @@ M.insert = function()
         print("Error while parsing patterns.")
         return
     end
-    local template_split = patterns.generalize(formatted, extension, opts)
-    if template_split == nil then
-        print("Error while generalizing pattern.")
-        return
+
+    local template_split ---@type table<string>|nil
+    if opts.generalize == true then
+        template_split = patterns.generalize(formatted, extension, opts)
+        if template_split == nil then
+            print("Error while generalizing pattern.")
+            return
+        end
+    else
+        template_split = vim.split(formatted, "\n")
     end
 
     local success = patterns.insert(template_split)

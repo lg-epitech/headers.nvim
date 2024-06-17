@@ -5,6 +5,8 @@
 -- utils.lua
 --
 
+local comments = require("headers.comments")
+
 local M = {}
 
 ---@param name string
@@ -22,6 +24,13 @@ M.get_extension = function()
     else
         return ext
     end
+end
+
+M.random_extension = function()
+    local listIdx = math.random(1, #comments.list)
+    local nameIdx = math.random(1, #comments.list[listIdx].names)
+
+    return comments.list[listIdx].names[nameIdx]
 end
 
 return M
