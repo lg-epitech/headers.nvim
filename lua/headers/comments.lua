@@ -55,7 +55,7 @@ local __comments = {
     comment:new({ "erl", "hrl" }, { middle = "%" }),
     comment:new({ "hs", "lhs" }, { head = "{-", middle = "--", tail = "-}" }),
     comment:new({ "jsx" }, { head = "{/*", middle = "**", tail = "*/}" }),
-    comment:new({ "html" }, { head = "<!--", middle = "--", tail = "-->" }),
+    comment:new({ "html", "md" }, { head = "<!--", middle = "--", tail = "-->" }),
     comment:new({ "cbl", "cob", "cpy" }, { middle = "      *" }),
     comment:new({ "clj", "cljs", "cljr", "cljc", "cljd", "edn" }, { middle = ";;" }),
     comment:new({ "lisp", "lsp", "l", "cl", "fasl" }, { middle = ";" }),
@@ -64,7 +64,6 @@ local __comments = {
     comment:new({ "gleam" }, { middle = "//" }),
     comment:new({ "jl" }, { head = "#=", middle = "==", tail = "=#" }),
     comment:new({ "ml" }, { head = "(*", middle = "**", tail = "*)" }),
-    comment:new({ "md" }, { head = "<!--", middle = "--", tail = "-->" }),
 }
 -- stylua: ignore end
 
