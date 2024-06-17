@@ -31,6 +31,7 @@ function _variant:new(extension, replacement, opts)
     new_variant.extension = extension
     new_variant.replacement = replacement
     new_variant.opts = opts or {}
+    new_variant.opts.generalize = new_variant.opts.generalize or true
 
     setmetatable(new_variant, _variant --[[@as table]])
     return new_variant
@@ -82,6 +83,7 @@ function _template:new(name, text, opts)
     new_template.is_selected = false
     new_template.variations = {}
     new_template.opts = opts or {}
+    new_template.opts.generalize = new_template.opts.generalize or true
 
     local p = path:new(storage_path):joinpath(utils.hash_string(name) .. ".txt")
     new_template.path = p.filename
