@@ -191,7 +191,6 @@ function ui:render_preview()
         return
     end
 
-
     local template_split ---@type table<string>|nil
 
     if opts.generalize == true then
