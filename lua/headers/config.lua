@@ -34,7 +34,7 @@ local function merge_table(t1, t2)
     return t1
 end
 
----@param UserConfig table
+---@param UserConfig table | nil
 function HConfig:merge(UserConfig)
-    HConfig = merge_table(HConfig, UserConfig)
+    HConfig = merge_table(HConfig, UserConfig or {})
 end

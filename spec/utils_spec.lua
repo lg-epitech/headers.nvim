@@ -10,8 +10,6 @@ local test = require("plenary.busted")
 local assert = require("luassert")
 
 test.describe("Utils", function()
-    -- TODO: test hash name
-
     test.it("Get extension", function()
         local expected
         local output

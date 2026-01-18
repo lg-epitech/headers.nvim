@@ -19,17 +19,18 @@ local M = {
 ---@param opts table
 M.setup = function(opts)
     local hPath = path:new(vim.fn.stdpath("data") .. "/headers")
+    local templates = require("headers.templates")
+    local ui = require("headers.ui")
+    require("headers.config")
+    require("headers.commands")
+
     if hPath:is_dir() == false then
         hPath:mkdir()
     end
 
-    require("headers.config")
     HConfig:merge(opts)
-
-    local templates = require("headers.templates")
     templates.scan()
-
-    require("headers.commands")
+    ui:setup()
 end
 
 return M

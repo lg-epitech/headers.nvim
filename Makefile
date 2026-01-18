@@ -5,15 +5,12 @@
 ## Makefile
 ##
 
-# WARN: This Makefile is for the convenience of running tests
-# DO NOT RUN WITHOUT CHANGING THE PROPER TEMPLATES DIR IN EACH FILE
+all: tests
 
-all: test_all
+tests:
+	nvim --headless -c "PlenaryBustedDirectory spec/" +qa
 
-test_all:
-	nvim --headless -c "PlenaryBustedDirectory spec/"
+utils:
+	nvim --headless -c "PlenaryBustedFile spec/utils_spec.lua" +qa
 
-test_templates:
-	nvim --headless -c "PlenaryBustedFile spec/templates_spec.lua"
-
-.PHONY:	test_all
+.PHONY:	tests

@@ -40,3 +40,4 @@ luac.out
 *.hex
 
 templates/*
+TODO.md
